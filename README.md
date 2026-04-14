@@ -2,15 +2,25 @@
 
 A small sandbox for experimenting with SVG animations.
 
-Paste an SVG, select elements, tweak a few animation properties, and see the result instantly.  
+Paste an SVG, select elements, tweak animation properties, and see the result instantly.  
 The goal is to make SVG animation easier to explore and understand without digging through documentation.
 
 ## Status
 
-Work in progress. The project is being built step by step.
+Early MVP. Currently supports opacity and scale animations with timing controls.  
+More properties coming next...
+
+## Features
+
+- Paste or drag-and-drop an SVG file
+- Click any element in the preview to select it
+- Animate opacity and scale with from/to keyframes
+- Control duration, delay, easing, repeat, and direction
+- Live preview with instant CSS `@keyframes` output
+- Copy the generated CSS/SVG with one click
 
 ## Tech
 
-- Svelte
+- Svelte 5
 - TypeScript
 - Vite
