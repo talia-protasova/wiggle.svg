@@ -7,8 +7,8 @@ The goal is to make SVG animation easier to explore and understand without diggi
 
 ## Status
 
-Early MVP. Currently supports opacity and scale animations with timing controls.  
-More properties coming next...
+Early MVP. Currently supports transform (translate, scale) and opacity animations with timing controls.
+More properties coming next (rotate, fill, stroke)
 
 ## Features
 
