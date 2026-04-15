@@ -1,20 +1,17 @@
 <script lang="ts">
-    import { sandbox, selectedAnimation, EASING_OPTIONS, EASING_LABELS } from '../stores/sandbox';
+    import { sandbox, selectedAnimation } from '../stores/sandbox';
+    import RangeFromTo from '../ui/RangeFromTo.svelte';
+    import ChipGroup from '../ui/ChipGroup.svelte';
+    import {
+        ITERATION_OPTIONS,
+        DIRECTION_OPTIONS,
+        EASING_OPTIONS,
+        EASING_LABELS,
+    } from '../../core/constants';
 
     const anim = $derived($selectedAnimation);
     const id = $derived($sandbox.selectedElementId);
     const hasSelection = $derived(!!id);
-
-    /**
-     * Updates visual animation properties (opacity, fill, stroke, etc.) for currently selected element
-     *
-     * @param key - Visual property name
-     * @param value - New value for the property
-     */
-    function onVisual(key: string, value: number) {
-        if (!id) return;
-        sandbox.updateVisual(id, { [key]: value });
-    }
 
     /**
      * Updates transform properties (translate, rotate, scale) for currently selected element
@@ -39,31 +36,10 @@
     }
 
     /**
-     * Sets animation iteration count (number of repeats or infinite)
-     *
-     * @param val - Iteration value (number or 'infinite')
-     */
-    function setIteration(val: number | 'infinite') {
-        if (!id) return;
-        sandbox.updateTiming(id, { iterationCount: val });
-    }
-
-    /**
-     * Sets animation direction mode
-     *
-     * @param val - Direction type (normal, reverse, alternate, etc.)
-     */
-    function setDirection(val: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse') {
-        if (!id) return;
-        sandbox.updateTiming(id, { direction: val });
-    }
-
-    /**
      * Resets animation state for current element, removes existing animation and reinitializes default values
      */
     function resetElement() {
         if (!id) return;
-
         sandbox.removeAnimation(id);
         sandbox.ensureAnimation(id);
     }
@@ -79,40 +55,19 @@
         <section class="controls__section">
             <h3 class="controls__title">visual</h3>
 
-            <!-- Opacity -->
-            <div class="controls__group" role="group" aria-labelledby="opacity-label">
-                <span id="opacity-label" class="controls__label">opacity</span>
-
-                <div class="controls__range-group">
-                    <div class="controls__range">
-                        <span id="opacity-from" class="controls__range-label">from</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={anim.visual.opacityFrom}
-                            aria-labelledby="opacity-label opacity-from"
-                            oninput={(e) => onVisual('opacityFrom', +e.currentTarget.value)}
-                        />
-                        <span class="controls__value">{anim.visual.opacityFrom.toFixed(2)}</span>
-                    </div>
-
-                    <div class="controls__range">
-                        <span id="opacity-to" class="controls__range-label">to</span>
-                        <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.01"
-                            value={anim.visual.opacityTo}
-                            aria-labelledby="opacity-label opacity-to"
-                            oninput={(e) => onVisual('opacityTo', +e.currentTarget.value)}
-                        />
-                        <span class="controls__value">{anim.visual.opacityTo.toFixed(2)}</span>
-                    </div>
-                </div>
-            </div>
+            <RangeFromTo
+                label="opacity"
+                min={0}
+                max={1}
+                step={0.01}
+                from={anim.visual.opacityFrom}
+                to={anim.visual.opacityTo}
+                format={(v) => v.toFixed(2)}
+                onchange={(from, to) => {
+                    if (!id) return;
+                    sandbox.updateVisual(id, { opacityFrom: from, opacityTo: to });
+                }}
+            />
 
             <div class="controls__row">
                 <label class="controls__label" for="sc">scale</label>
@@ -180,47 +135,19 @@
                 </select>
             </div>
 
-            <!-- repeat -->
-            <div class="controls__row">
-                <span class="controls__label">repeat</span>
-                <div class="controls__chips">
-                    {#each [1, 2, 3] as n}
-                        <button
-                            class="controls__chip"
-                            class:controls__chip--active={anim.timing.iterationCount === n}
-                            aria-pressed={anim.timing.iterationCount === n}
-                            onclick={() => setIteration(n)}
-                        >
-                            {n}×
-                        </button>
-                    {/each}
-                    <button
-                        class="controls__chip"
-                        class:controls__chip--active={anim.timing.iterationCount === 'infinite'}
-                        aria-pressed={anim.timing.iterationCount === 'infinite'}
-                        onclick={() => setIteration('infinite')}
-                    >
-                        ∞
-                    </button>
-                </div>
-            </div>
+            <ChipGroup
+                label="repeat"
+                options={ITERATION_OPTIONS}
+                value={anim.timing.iterationCount}
+                onchange={(val) => onTiming('iterationCount', val)}
+            />
 
-            <!-- direction -->
-            <div class="controls__row">
-                <span class="controls__label">direction</span>
-                <div class="controls__chips">
-                    {#each ['normal', 'reverse', 'alternate'] as const as dir}
-                        <button
-                            class="controls__chip"
-                            class:controls__chip--active={anim.timing.direction === dir}
-                            aria-pressed={anim.timing.direction === dir}
-                            onclick={() => setDirection(dir)}
-                        >
-                            {dir}
-                        </button>
-                    {/each}
-                </div>
-            </div>
+            <ChipGroup
+                label="direction"
+                options={DIRECTION_OPTIONS}
+                value={anim.timing.direction}
+                onchange={(val) => onTiming('direction', val)}
+            />
         </section>
 
         <button
@@ -276,11 +203,7 @@
 
         border-block-end: 0.03125rem solid var(--color-border-tertiary);
     }
-    .controls__group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-    }
+
     .controls__title {
         margin-block-end: 0.625rem;
 
@@ -296,8 +219,6 @@
         grid-template-columns: 4.5rem 1fr 3rem;
         align-items: center;
         gap: 0.375rem;
-
-        margin-block-end: 0.5rem;
     }
 
     .controls__label {
@@ -312,34 +233,20 @@
         text-align: end;
     }
 
-    .controls__range-group {
-        display: flex;
-        flex-direction: column;
-        gap: 0.25rem;
-    }
-
-    .controls__range {
-        display: grid;
-        grid-template-columns: 2rem 1fr 3rem;
-        align-items: center;
-        gap: 0.375rem;
-    }
-
-    .controls__range-label {
-        font-size: 0.75rem;
-        color: var(--color-text-tertiary);
-        text-transform: uppercase;
-    }
-
     .controls__grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 0.5rem;
     }
 
+    .controls__field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
     .controls__input-wrap {
         position: relative;
-
         display: flex;
         align-items: center;
     }
@@ -371,33 +278,6 @@
         font-size: 0.875rem;
     }
 
-    .controls__chips {
-        display: flex;
-        gap: 0.25rem;
-        flex-wrap: wrap;
-    }
-
-    .controls__chip {
-        padding-block: 0.25rem;
-        padding-inline: 0.5rem;
-
-        border-radius: var(--border-radius-md);
-        border: 0.03125rem solid var(--color-border-tertiary);
-        background: transparent;
-        color: var(--color-text-secondary);
-        cursor: pointer;
-
-        font-size: 0.975rem;
-    }
-
-    .controls__chip--active {
-        background: var(--accent-tint);
-        border-color: var(--accent-mid);
-
-        color: var(--accent-text);
-        font-weight: 500;
-    }
-
     .controls__reset {
         margin-block-start: auto;
 
@@ -409,5 +289,12 @@
         background: transparent;
 
         font-size: 0.875rem;
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        transition: background 0.1s;
+    }
+
+    .controls__reset:hover {
+        background: var(--color-background-secondary);
     }
 </style>
