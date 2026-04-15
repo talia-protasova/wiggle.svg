@@ -4,43 +4,46 @@
     import AnimationControls from './lib/components/AnimationControls.svelte';
     import CssOutput from './lib/components/CssOutput.svelte';
     import Topbar from './lib/ui/Topbar.svelte';
+    import DesktopOnly from './lib/components/DesktopOnly.svelte';
 </script>
 
-<div class="layout">
-    <Topbar />
+<DesktopOnly>
+    <div class="layout">
+        <Topbar />
 
-    <main class="layout__workspace">
-        <section class="workspace__panel workspace__panel--input" aria-label="SVG input">
-            <div class="panel__header">input</div>
-            <div class="panel__body">
-                <SvgInput />
-            </div>
-        </section>
+        <main class="layout__workspace">
+            <section class="workspace__panel workspace__panel--input" aria-label="SVG input">
+                <div class="panel__header">input</div>
+                <div class="panel__body">
+                    <SvgInput />
+                </div>
+            </section>
 
-        <section class="workspace__panel workspace__panel--preview" aria-label="SVG preview">
-            <div class="panel__header">preview</div>
-            <SvgPreview />
-        </section>
+            <section class="workspace__panel workspace__panel--preview" aria-label="SVG preview">
+                <div class="panel__header">preview</div>
+                <SvgPreview />
+            </section>
 
-        <section
-            class="workspace__panel workspace__panel--controls"
-            aria-label="Animation controls and output"
-        >
-            <div class="controls">
-                <div class="controls__top">
-                    <div class="panel__header">animate</div>
-                    <div class="controls__body">
-                        <AnimationControls />
+            <section
+                class="workspace__panel workspace__panel--controls"
+                aria-label="Animation controls and output"
+            >
+                <div class="controls">
+                    <div class="controls__top">
+                        <div class="panel__header">animate</div>
+                        <div class="controls__body">
+                            <AnimationControls />
+                        </div>
+                    </div>
+
+                    <div class="controls__bottom">
+                        <CssOutput />
                     </div>
                 </div>
-
-                <div class="controls__bottom">
-                    <CssOutput />
-                </div>
-            </div>
-        </section>
-    </main>
-</div>
+            </section>
+        </main>
+    </div>
+</DesktopOnly>
 
 <style>
     .layout {

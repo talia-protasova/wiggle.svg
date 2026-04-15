@@ -8,6 +8,7 @@
         EASING_OPTIONS,
         EASING_LABELS,
     } from '../../core/constants';
+    import RangeSingle from '../ui/RangeSingle.svelte';
 
     const anim = $derived($selectedAnimation);
     const id = $derived($sandbox.selectedElementId);
@@ -51,6 +52,44 @@
             <p>select an element<br />in the preview</p>
         </div>
     {:else if anim}
+        <!-- TRANSFORM -->
+        <section class="controls__section">
+            <h3 class="controls__title">transform</h3>
+
+            <RangeSingle
+                id="tx"
+                label="translate x"
+                min={-200}
+                max={200}
+                step={1}
+                value={anim.transform.translateX}
+                format={(v) => `${v}px`}
+                onchange={(v) => onTransform('translateX', v)}
+            />
+
+            <RangeSingle
+                id="ty"
+                label="translate y"
+                min={-200}
+                max={200}
+                step={1}
+                value={anim.transform.translateY}
+                format={(v) => `${v}px`}
+                onchange={(v) => onTransform('translateY', v)}
+            />
+
+            <RangeSingle
+                id="sc"
+                label="scale"
+                min={0.1}
+                max={3}
+                step={0.05}
+                value={anim.transform.scale}
+                format={(v) => `${v.toFixed(2)}×`}
+                onchange={(v) => onTransform('scale', v)}
+            />
+        </section>
+
         <!-- VISUAL -->
         <section class="controls__section">
             <h3 class="controls__title">visual</h3>
@@ -68,20 +107,6 @@
                     sandbox.updateVisual(id, { opacityFrom: from, opacityTo: to });
                 }}
             />
-
-            <div class="controls__row">
-                <label class="controls__label" for="sc">scale</label>
-                <input
-                    id="sc"
-                    type="range"
-                    min="0.1"
-                    max="3"
-                    step="0.05"
-                    value={anim.transform.scale}
-                    oninput={(e) => onTransform('scale', +e.currentTarget.value)}
-                />
-                <span class="controls__value">{anim.transform.scale.toFixed(2)}×</span>
-            </div>
         </section>
 
         <!-- TIMING -->
@@ -224,13 +249,6 @@
     .controls__label {
         font-size: 0.875rem;
         color: var(--color-text-secondary);
-    }
-
-    .controls__value {
-        font-size: 0.875rem;
-        font-family: var(--font-mono);
-        color: var(--color-text-primary);
-        text-align: end;
     }
 
     .controls__grid {
