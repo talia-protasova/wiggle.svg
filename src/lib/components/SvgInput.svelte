@@ -88,7 +88,7 @@
         aria-label="SVG drop zone"
     >
         <div class="input-panel__dropzone-icon">
-            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
                 <path
                     d="M8 2v8M5 7l3 3 3-3M2 13h12"
                     stroke="currentColor"

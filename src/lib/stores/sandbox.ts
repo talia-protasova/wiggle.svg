@@ -1,91 +1,21 @@
 import { writable, derived } from 'svelte/store';
 import { buildCSS } from '../utils/cssGenerator';
+import type {
+    ElementAnimation,
+    SandboxState,
+    TimingValues,
+    TransformValues,
+    VisualValues,
+} from '../../core/models';
+import { DEFAULT_TIMING, DEFAULT_TRANSFORM, DEFAULT_VISUAL } from '../../core/constants';
 
-export type TransformValues = {
-    translateX: number;
-    translateY: number;
-    rotate: number;
-    scale: number;
-};
-
-export type VisualValues = {
-    opacityFrom: number;
-    opacityTo: number;
-    fillFrom: string;
-    fillTo: string;
-    strokeFrom: string;
-    strokeTo: string;
-    strokeDashoffsetFrom: number;
-    strokeDashoffsetTo: number;
-};
-
-export type TimingValues = {
-    duration: number;
-    delay: number;
-    easing: string;
-    iterationCount: number | 'infinite';
-    direction: 'normal' | 'reverse' | 'alternate' | 'alternate-reverse';
-};
-
-export type ElementAnimation = {
-    elementId: string;
-    transform: TransformValues;
-    visual: VisualValues;
-    timing: TimingValues;
-};
-
-export type SandboxState = {
-    svgSource: string;
-    animations: Map<string, ElementAnimation>;
-    selectedElementId: string | null;
-    isPlaying: boolean;
-    processedSvg: string;
-};
-
-export const DEFAULT_TRANSFORM: TransformValues = {
-    translateX: 0,
-    translateY: 0,
-    rotate: 0,
-    scale: 1,
-};
-
-export const DEFAULT_VISUAL: VisualValues = {
-    opacityFrom: 1,
-    opacityTo: 1,
-    fillFrom: '',
-    fillTo: '',
-    strokeFrom: '',
-    strokeTo: '',
-    strokeDashoffsetFrom: 0,
-    strokeDashoffsetTo: 0,
-};
-
-export const DEFAULT_TIMING: TimingValues = {
-    duration: 1,
-    delay: 0,
-    easing: 'ease',
-    iterationCount: 1,
-    direction: 'normal',
-};
-
-export const EASING_OPTIONS = [
-    'ease',
-    'ease-in',
-    'ease-out',
-    'ease-in-out',
-    'linear',
-    'cubic-bezier(0.34, 1.56, 0.64, 1)',
-] as const;
-
-export const EASING_LABELS: Record<string, string> = {
-    ease: 'ease',
-    'ease-in': 'ease-in',
-    'ease-out': 'ease-out',
-    'ease-in-out': 'ease-in-out',
-    linear: 'linear',
-    'cubic-bezier(0.34, 1.56, 0.64, 1)': 'spring',
-};
-
+/**
+ * Creates a default animation object for a given SVG element
+ * Initializes transform, visual and timing properties with default values
+ *
+ * @param elementId - unique identifier of the SVG element
+ * @returns new animation object with default configuration
+ */
 function makeDefaultAnimation(elementId: string): ElementAnimation {
     return {
         elementId,
@@ -95,6 +25,12 @@ function makeDefaultAnimation(elementId: string): ElementAnimation {
     };
 }
 
+/**
+ * Creates sandbox store for managing SVG animations state
+ * Handles source SVG, selected element, animations map and playback state
+ *
+ * @returns store API with state and mutation methods
+ */
 function createSandboxStore() {
     const { subscribe, set, update } = writable<SandboxState>({
         svgSource: '',
@@ -107,18 +43,40 @@ function createSandboxStore() {
     return {
         subscribe,
 
+        /**
+         * Sets raw SVG source string
+         *
+         * @param source - original SVG markup
+         */
         setSvgSource(source: string) {
             update((s) => ({ ...s, svgSource: source }));
         },
 
+        /**
+         * Sets currently selected SVG element
+         *
+         * @param id - element id or null if nothing is selected
+         */
         selectElement(id: string | null) {
             update((s) => ({ ...s, selectedElementId: id }));
         },
 
+        /**
+         * Toggles animation playback state
+         *
+         * @param playing - should animation be playing or not
+         */
         setPlaying(playing: boolean) {
             update((s) => ({ ...s, isPlaying: playing }));
         },
 
+        /**
+         * Ensures that animation exists for the given element
+         * Creates a new one if it doesn't exist
+         *
+         * @param elementId - eement id
+         * @returns existing / newly created animation
+         */
         ensureAnimation(elementId: string): ElementAnimation {
             let result!: ElementAnimation;
             update((s) => {
@@ -134,15 +92,13 @@ function createSandboxStore() {
             return result;
         },
 
-        getAnimation(elementId: string): ElementAnimation | undefined {
-            let result: ElementAnimation | undefined;
-            update((s) => {
-                result = s.animations.get(elementId);
-                return s;
-            });
-            return result;
-        },
-
+        /**
+         * Updates transform properties for a specific element
+         * Merges new values with existing ones
+         *
+         * @param elementId - element id
+         * @param transform - partial transform values to update
+         */
         updateTransform(elementId: string, transform: Partial<TransformValues>) {
             update((s) => {
                 const anim = s.animations.get(elementId) ?? makeDefaultAnimation(elementId);
@@ -154,6 +110,12 @@ function createSandboxStore() {
             });
         },
 
+        /**
+         * Updates visual properties (opacity, fill, stroke, etc) for a specific element
+         *
+         * @param elementId - element id
+         * @param visual - partial visual values to update
+         */
         updateVisual(elementId: string, visual: Partial<VisualValues>) {
             update((s) => {
                 const anim = s.animations.get(elementId) ?? makeDefaultAnimation(elementId);
@@ -164,6 +126,13 @@ function createSandboxStore() {
                 return { ...s, animations: new Map(s.animations) };
             });
         },
+
+        /**
+         * Updates timing properties (duration, delay, easing, etc) for a specific element
+         *
+         * @param elementId - element id
+         * @param timing - prtial timing values to update
+         */
 
         updateTiming(elementId: string, timing: Partial<TimingValues>) {
             update((s) => {
@@ -176,16 +145,11 @@ function createSandboxStore() {
             });
         },
 
-        updateOrigin(elementId: string) {
-            update((s) => {
-                const anim = s.animations.get(elementId) ?? makeDefaultAnimation(elementId);
-                s.animations.set(elementId, {
-                    ...anim,
-                });
-                return { ...s, animations: new Map(s.animations) };
-            });
-        },
-
+        /**
+         * Removes animation for the given element
+         *
+         * @param elementId - element id
+         */
         removeAnimation(elementId: string) {
             update((s) => {
                 s.animations.delete(elementId);
@@ -193,10 +157,18 @@ function createSandboxStore() {
             });
         },
 
+        /**
+         * Sets processed SVG (with applied ids / transformations)
+         *
+         * @param svg - processed SVG string
+         */
         setProcessedSvg(svg: string) {
             update((s) => ({ ...s, processedSvg: svg }));
         },
 
+        /**
+         * Resets entire sandbox state to initial values
+         */
         resetAll() {
             set({
                 svgSource: '',
