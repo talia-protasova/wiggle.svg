@@ -1,4 +1,11 @@
-import type { ElementAnimation } from '../stores/sandbox';
+import type { ElementAnimation } from '../../core/models';
+
+/**
+ * Checks whether translate animation is applied
+ */
+function hasTranslateAnimation(anim: ElementAnimation): boolean {
+    return anim.transform.translateX !== 0 || anim.transform.translateY !== 0;
+}
 
 /**
  * Checks whether scale animation is applied
@@ -6,6 +13,13 @@ import type { ElementAnimation } from '../stores/sandbox';
  */
 function hasScaleAnimation(anim: ElementAnimation): boolean {
     return anim.transform.scale !== 1;
+}
+
+/**
+ * Checks whether any transform animation is applied
+ */
+function hasTransformAnimation(anim: ElementAnimation): boolean {
+    return hasTranslateAnimation(anim) || hasScaleAnimation(anim);
 }
 
 /**
@@ -21,9 +35,8 @@ function hasOpacityAnimation(anim: ElementAnimation): boolean {
  * Used to skip elements without changes
  */
 function hasAnyAnimation(anim: ElementAnimation): boolean {
-    return hasScaleAnimation(anim) || hasOpacityAnimation(anim);
+    return hasTransformAnimation(anim) || hasOpacityAnimation(anim);
 }
-
 /**
  * Builds CSS properties for "from" keyframe
  *
@@ -37,8 +50,8 @@ function buildFromProps(anim: ElementAnimation): string[] {
         props.push(`  opacity: ${anim.visual.opacityFrom};`);
     }
 
-    if (hasScaleAnimation(anim)) {
-        props.push(`  transform: scale(1);`);
+    if (hasTransformAnimation(anim)) {
+        props.push(`  transform: ${buildTransformValue(anim, true)};`);
     }
 
     return props;
@@ -57,19 +70,31 @@ function buildToProps(anim: ElementAnimation): string[] {
         props.push(`  opacity: ${anim.visual.opacityTo};`);
     }
 
-    if (hasScaleAnimation(anim)) {
-        props.push(`  transform: scale(${anim.transform.scale});`);
+    if (hasTransformAnimation(anim)) {
+        props.push(`  transform: ${buildTransformValue(anim, false)};`);
     }
 
     return props;
 }
 
 /**
+ * Builds transform string from current transform values
+ * Only includes properties that are actually animated
+ */
+function buildTransformValue(anim: ElementAnimation, isFrom: boolean): string {
+    const t = anim.transform;
+    const tx = isFrom ? 0 : t.translateX;
+    const ty = isFrom ? 0 : t.translateY;
+    const scale = isFrom ? 1 : t.scale;
+    return `translate(${tx}px, ${ty}px) scale(${scale})`;
+}
+
+/**
  * Generates full CSS block (keyframes + element rule)
  * for a single animated element
  *
- * @param anim - Animation configuration
- * @param index - Index used for unique keyframe naming
+ * @param anim - animation configuration
+ * @param index - index used for unique keyframe naming
  * @returns CSS string or empty string if no animation is present
  */
 function buildElementCSS(anim: ElementAnimation, index: number): string {
