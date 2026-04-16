@@ -5,6 +5,14 @@ export const DEFAULT_TRANSFORM: TransformValues = {
     translateY: 0,
     rotate: 0,
     scale: 1,
+    rotateFrom: 0,
+    rotateTo: 0,
+    rotateOriginX: 50,
+    rotateOriginY: 50,
+    orbitMode: false,
+    orbitRadius: 10,
+    rotateX: 0,
+    rotateY: 0,
 };
 
 export const DEFAULT_VISUAL: VisualValues = {

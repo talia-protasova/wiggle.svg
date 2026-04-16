@@ -3,6 +3,14 @@ export type TransformValues = {
     translateY: number;
     rotate: number;
     scale: number;
+    rotateFrom: number;
+    rotateTo: number;
+    rotateOriginX: number;
+    rotateOriginY: number;
+    orbitRadius: number;
+    orbitMode: boolean;
+    rotateX: number;
+    rotateY: number;
 };
 
 export type VisualValues = {
