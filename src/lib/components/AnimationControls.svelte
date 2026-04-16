@@ -15,6 +15,16 @@
     const hasSelection = $derived(!!id);
 
     /**
+     * Toggles orbit animation mode for current element
+     *
+     * @param value - new orbit mode state
+     */
+    function onOrbitMode(value: boolean) {
+        if (!id) return;
+        sandbox.updateTransform(id, { orbitMode: value });
+    }
+
+    /**
      * Updates transform properties (translate, rotate, scale) for currently selected element
      *
      * @param key - Transform property name
@@ -88,6 +98,89 @@
                 format={(v) => `${v.toFixed(2)}×`}
                 onchange={(v) => onTransform('scale', v)}
             />
+
+            <RangeFromTo
+                label="rotate"
+                min={-360}
+                max={360}
+                step={1}
+                from={anim.transform.rotateFrom}
+                to={anim.transform.rotateTo}
+                format={(v) => `${v}°`}
+                onchange={(from, to) => {
+                    if (!id) return;
+                    sandbox.updateTransform(id, { rotateFrom: from, rotateTo: to });
+                }}
+            />
+
+            {#if !anim.transform.orbitMode}
+                <RangeSingle
+                    id="ox"
+                    label="origin x"
+                    min={-200}
+                    max={200}
+                    step={1}
+                    value={anim.transform.rotateOriginX}
+                    format={(v) => `${v}%`}
+                    onchange={(v) => onTransform('rotateOriginX', v)}
+                />
+
+                <RangeSingle
+                    id="oy"
+                    label="origin y"
+                    min={-200}
+                    max={200}
+                    step={1}
+                    value={anim.transform.rotateOriginY}
+                    format={(v) => `${v}%`}
+                    onchange={(v) => onTransform('rotateOriginY', v)}
+                />
+
+                <RangeSingle
+                    id="rx"
+                    label="rotate x"
+                    min={-180}
+                    max={180}
+                    step={1}
+                    value={anim.transform.rotateX}
+                    format={(v) => `${v}°`}
+                    onchange={(v) => onTransform('rotateX', v)}
+                />
+
+                <RangeSingle
+                    id="ry"
+                    label="rotate y"
+                    min={-180}
+                    max={180}
+                    step={1}
+                    value={anim.transform.rotateY}
+                    format={(v) => `${v}°`}
+                    onchange={(v) => onTransform('rotateY', v)}
+                />
+            {/if}
+
+            <div class="controls__row">
+                <label class="controls__label" for="orbit">orbit</label>
+                <input
+                    id="orbit"
+                    type="checkbox"
+                    checked={anim.transform.orbitMode}
+                    onchange={(e) => onOrbitMode(e.currentTarget.checked)}
+                />
+            </div>
+
+            {#if anim.transform.orbitMode}
+                <RangeSingle
+                    id="or"
+                    label="radius"
+                    min={0}
+                    max={300}
+                    step={1}
+                    value={anim.transform.orbitRadius}
+                    format={(v) => `${v}px`}
+                    onchange={(v) => onTransform('orbitRadius', v)}
+                />
+            {/if}
         </section>
 
         <!-- VISUAL -->

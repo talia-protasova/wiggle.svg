@@ -1,6 +1,33 @@
 import type { ElementAnimation } from '../../core/models';
 
 /**
+ * Checks whether orbit animation mode is enabled
+ *
+ * @param anim - animation configuration
+ * @returns `true`, if orbit animation is enabled
+ */
+function hasOrbitAnimation(anim: ElementAnimation): boolean {
+    return anim.transform.orbitMode;
+}
+
+/**
+ * Checks whether rotate animation is applied
+ * Rotation is considered animated if:
+ * - rotation angle changes (from/to differ)
+ * - or 3D rotation is used (rotateX / rotateY)
+ *
+ * @param anim - animation configuration
+ * @returns `true`, if rotation is animated
+ */
+function hasRotateAnimation(anim: ElementAnimation): boolean {
+    return (
+        anim.transform.rotateFrom !== anim.transform.rotateTo ||
+        anim.transform.rotateX !== 0 ||
+        anim.transform.rotateY !== 0
+    );
+}
+
+/**
  * Checks whether translate animation is applied
  */
 function hasTranslateAnimation(anim: ElementAnimation): boolean {
@@ -19,7 +46,12 @@ function hasScaleAnimation(anim: ElementAnimation): boolean {
  * Checks whether any transform animation is applied
  */
 function hasTransformAnimation(anim: ElementAnimation): boolean {
-    return hasTranslateAnimation(anim) || hasScaleAnimation(anim);
+    return (
+        hasTranslateAnimation(anim) ||
+        hasScaleAnimation(anim) ||
+        hasRotateAnimation(anim) ||
+        hasOrbitAnimation(anim)
+    );
 }
 
 /**
@@ -83,12 +115,24 @@ function buildToProps(anim: ElementAnimation): string[] {
  */
 function buildTransformValue(anim: ElementAnimation, isFrom: boolean): string {
     const t = anim.transform;
+
+    if (t.orbitMode) {
+        const angle = isFrom ? t.rotateFrom : t.rotateTo;
+        const scale = isFrom ? 1 : t.scale;
+        // translate одинаковый в from и to — это просто смещение центра орбиты
+        return `translate(${t.translateX}px, ${t.translateY}px) rotate(${angle}deg) translateX(${t.orbitRadius}px) rotate(-${angle}deg) scale(${scale})`;
+    }
+
     const tx = isFrom ? 0 : t.translateX;
     const ty = isFrom ? 0 : t.translateY;
     const scale = isFrom ? 1 : t.scale;
-    return `translate(${tx}px, ${ty}px) scale(${scale})`;
+    const rotate = isFrom ? t.rotateFrom : t.rotateTo;
+    const rotateX = isFrom ? 0 : t.rotateX;
+    const rotateY = isFrom ? 0 : t.rotateY;
+    const needsPerspective = t.rotateX !== 0 || t.rotateY !== 0;
+    const perspective = needsPerspective ? 'perspective(600px) ' : '';
+    return `${perspective}translate(${tx}px, ${ty}px) scale(${scale}) rotate(${rotate}deg) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
 }
-
 /**
  * Generates full CSS block (keyframes + element rule)
  * for a single animated element
@@ -110,6 +154,10 @@ function buildElementCSS(anim: ElementAnimation, index: number): string {
     const iterCount =
         anim.timing.iterationCount === 'infinite' ? 'infinite' : String(anim.timing.iterationCount);
 
+    const isOrbit = anim.transform.orbitMode;
+    const originX = isOrbit ? 0 : anim.transform.rotateOriginX;
+    const originY = isOrbit ? 0 : anim.transform.rotateOriginY;
+
     /**
      * Builds @keyframes block
      */
@@ -127,8 +175,9 @@ function buildElementCSS(anim: ElementAnimation, index: number): string {
      * Applies animation and required transform settings
      */
     const elementRule = `#${anim.elementId} {
-        transform-box: fill-box;
-        transform-origin: center;
+         ${isOrbit ? '' : 'transform-box: fill-box;'}
+        transform-origin: ${originX}% ${originY}%;
+        transform-origin: ${originX}% ${originY}%;
         animation-name: ${keyframeName};
         animation-duration: ${anim.timing.duration}s;
         animation-delay: ${anim.timing.delay}s;
@@ -136,6 +185,7 @@ function buildElementCSS(anim: ElementAnimation, index: number): string {
         animation-iteration-count: ${iterCount};
         animation-direction: ${anim.timing.direction};
         animation-fill-mode: forwards;
+        
     }`;
 
     return `${keyframes}\n\n${elementRule}`;
