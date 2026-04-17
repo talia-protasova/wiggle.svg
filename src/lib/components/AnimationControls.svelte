@@ -13,6 +13,7 @@
     const anim = $derived($selectedAnimation);
     const id = $derived($sandbox.selectedElementId);
     const hasSelection = $derived(!!id);
+    const pathLength = $derived($sandbox.selectedPathLength);
 
     /**
      * Toggles orbit animation mode for current element
@@ -170,6 +171,11 @@
             </div>
 
             {#if anim.transform.orbitMode}
+                <!--
+                  Orbit-specific control
+                  Radius defines distance from center point for circular motion
+                  Only visible when orbit mode is enabled, as it has no effect in default transform mode.
+                -->
                 <RangeSingle
                     id="or"
                     label="radius"
@@ -200,6 +206,30 @@
                     sandbox.updateVisual(id, { opacityFrom: from, opacityTo: to });
                 }}
             />
+
+            {#if pathLength !== null}
+                <!--
+                  Controls stroke-dashoffset animation
+                  Path length is required to properly map offset values along the path
+                  Hidden for elements without measurable geometry or visible stroke
+                -->
+                <RangeFromTo
+                    label="dash offset"
+                    min={0}
+                    max={pathLength}
+                    step={1}
+                    from={anim.visual.strokeDashoffsetFrom}
+                    to={anim.visual.strokeDashoffsetTo}
+                    format={(v) => `${v}`}
+                    onchange={(from, to) => {
+                        if (!id) return;
+                        sandbox.updateVisual(id, {
+                            strokeDashoffsetFrom: from,
+                            strokeDashoffsetTo: to,
+                        });
+                    }}
+                />
+            {/if}
         </section>
 
         <!-- TIMING -->

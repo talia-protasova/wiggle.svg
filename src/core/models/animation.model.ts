@@ -37,4 +37,5 @@ export type ElementAnimation = {
     transform: TransformValues;
     visual: VisualValues;
     timing: TimingValues;
+    pathLength: number | null;
 };

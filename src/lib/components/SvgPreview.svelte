@@ -100,7 +100,15 @@
 
     /**
      * Handles element selection inside SVG
-     * Applies selection class, assigns id if missing, and ensures animation state exists in store
+     *
+     * Flow:
+     * - Ignores non-SVG or non-animatable elements
+     * - Toggles selection if same element is clicked
+     * - Assigns unique id if missing
+     * - Applies visual selection state (CSS class)
+     * - Syncs selected element with store
+     * - Initializes animation config if needed
+     * - Calculates path length for stroke animations (if supported)
      *
      * @param e - mouse event from preview canvas
      */
@@ -127,6 +135,28 @@
 
         sandbox.selectElement(selectedEl.id);
         sandbox.ensureAnimation(selectedEl.id);
+
+        /**
+         * Calculates path length for stroke-based animations
+         * Only applies if element supports getTotalLength and has visible stroke
+         */
+        if (typeof (selectedEl as SVGGeometryElement).getTotalLength === 'function') {
+            /**
+             * Checks whether element has visible stroke
+             * Required to determine if dashoffset animation can be applied
+             */
+            const length = Math.ceil((selectedEl as SVGGeometryElement).getTotalLength());
+
+            const hasStroke =
+                selectedEl.getAttribute('stroke') !== 'none' &&
+                (selectedEl.getAttribute('stroke') !== null ||
+                    getComputedStyle(selectedEl).stroke !== 'none');
+
+            sandbox.updatePathLength(selectedEl.id, hasStroke ? length : null);
+            sandbox.setSelectedPathLength(hasStroke ? length : null);
+        } else {
+            sandbox.setSelectedPathLength(null);
+        }
     }
 
     /**
@@ -136,8 +166,13 @@
         selectedEl?.classList.remove('wiggle-selected');
         selectedEl = null;
         sandbox.selectElement(null);
+        sandbox.setSelectedPathLength(null);
     }
 
+    /**
+     * Derived label for currently selected element
+     * Used in UI footer to display element type / name
+     */
     const selectedLabel = $derived(selectedEl ? getElementInfo(selectedEl).label : null);
 </script>
 
@@ -203,8 +238,8 @@
 
 <style>
     .preview {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: 8fr 1fr;
 
         block-size: 100%;
     }

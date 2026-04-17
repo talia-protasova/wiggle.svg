@@ -1,6 +1,17 @@
 import type { ElementAnimation } from '../../core/models';
 
 /**
+ * Checks whether stroke-dashoffset animation is applied
+ * Animation is considered active if "from" and "to" values differ
+ *
+ * @param anim - animation configuration
+ * @returns `true`, if dashoffset is animated
+ */
+function hasDashoffsetAnimation(anim: ElementAnimation): boolean {
+    return anim.visual.strokeDashoffsetFrom !== anim.visual.strokeDashoffsetTo;
+}
+
+/**
  * Checks whether orbit animation mode is enabled
  *
  * @param anim - animation configuration
@@ -67,7 +78,7 @@ function hasOpacityAnimation(anim: ElementAnimation): boolean {
  * Used to skip elements without changes
  */
 function hasAnyAnimation(anim: ElementAnimation): boolean {
-    return hasTransformAnimation(anim) || hasOpacityAnimation(anim);
+    return hasTransformAnimation(anim) || hasOpacityAnimation(anim) || hasDashoffsetAnimation(anim);
 }
 /**
  * Builds CSS properties for "from" keyframe
@@ -84,6 +95,10 @@ function buildFromProps(anim: ElementAnimation): string[] {
 
     if (hasTransformAnimation(anim)) {
         props.push(`  transform: ${buildTransformValue(anim, true)};`);
+    }
+
+    if (hasDashoffsetAnimation(anim)) {
+        props.push(`  stroke-dashoffset: ${anim.visual.strokeDashoffsetFrom};`);
     }
 
     return props;
@@ -104,6 +119,10 @@ function buildToProps(anim: ElementAnimation): string[] {
 
     if (hasTransformAnimation(anim)) {
         props.push(`  transform: ${buildTransformValue(anim, false)};`);
+    }
+
+    if (hasDashoffsetAnimation(anim)) {
+        props.push(`  stroke-dashoffset: ${anim.visual.strokeDashoffsetTo};`);
     }
 
     return props;
@@ -158,6 +177,11 @@ function buildElementCSS(anim: ElementAnimation, index: number): string {
     const originX = isOrbit ? 0 : anim.transform.rotateOriginX;
     const originY = isOrbit ? 0 : anim.transform.rotateOriginY;
 
+    const dasharray =
+        anim.pathLength && hasDashoffsetAnimation(anim)
+            ? `\n  stroke-dasharray: ${anim.pathLength};`
+            : '';
+
     /**
      * Builds @keyframes block
      */
@@ -177,14 +201,13 @@ function buildElementCSS(anim: ElementAnimation, index: number): string {
     const elementRule = `#${anim.elementId} {
          ${isOrbit ? '' : 'transform-box: fill-box;'}
         transform-origin: ${originX}% ${originY}%;
-        transform-origin: ${originX}% ${originY}%;
         animation-name: ${keyframeName};
         animation-duration: ${anim.timing.duration}s;
         animation-delay: ${anim.timing.delay}s;
         animation-timing-function: ${anim.timing.easing};
         animation-iteration-count: ${iterCount};
         animation-direction: ${anim.timing.direction};
-        animation-fill-mode: forwards;
+        animation-fill-mode: forwards;${dasharray}
         
     }`;
 

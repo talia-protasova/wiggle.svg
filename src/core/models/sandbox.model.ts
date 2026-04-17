@@ -6,4 +6,5 @@ export type SandboxState = {
     selectedElementId: string | null;
     isPlaying: boolean;
     processedSvg: string;
+    selectedPathLength: number | null;
 };

@@ -22,6 +22,7 @@ function makeDefaultAnimation(elementId: string): ElementAnimation {
         transform: { ...DEFAULT_TRANSFORM },
         visual: { ...DEFAULT_VISUAL },
         timing: { ...DEFAULT_TIMING },
+        pathLength: null,
     };
 }
 
@@ -38,6 +39,7 @@ function createSandboxStore() {
         selectedElementId: null,
         isPlaying: false,
         processedSvg: '',
+        selectedPathLength: null,
     });
 
     return {
@@ -167,6 +169,31 @@ function createSandboxStore() {
         },
 
         /**
+         * Sets path length for currently selected SVG element
+         * Used to control stroke-dasharray / stroke-dashoffset animations
+         *
+         * @param length - total path length or null to reset
+         */
+        setSelectedPathLength(length: number | null) {
+            update((s) => ({ ...s, selectedPathLength: length }));
+        },
+
+        /**
+         * Updates path length value for a specific element animation
+         * Creates animation entry if it doesn't exist
+         *
+         * @param elementId - element id
+         * @param length - total path length or null to remove value
+         */
+        updatePathLength(elementId: string, length: number | null) {
+            update((s) => {
+                const anim = s.animations.get(elementId) ?? makeDefaultAnimation(elementId);
+                s.animations.set(elementId, { ...anim, pathLength: length });
+                return { ...s, animations: new Map(s.animations) };
+            });
+        },
+
+        /**
          * Resets entire sandbox state to initial values
          */
         resetAll() {
@@ -176,6 +203,7 @@ function createSandboxStore() {
                 selectedElementId: null,
                 isPlaying: false,
                 processedSvg: '',
+                selectedPathLength: null,
             });
         },
     };
@@ -183,8 +211,16 @@ function createSandboxStore() {
 
 export const sandbox = createSandboxStore();
 
+/**
+ * Generated CSS string based on current animations map
+ * Recomputes automatically on any sandbox state change
+ */
 export const generatedCSS = derived(sandbox, ($s) => buildCSS($s.animations));
 
+/**
+ * Returns animation for currently selected element
+ * Falls back to default animation if element has no configuration yet
+ */
 export const selectedAnimation = derived(sandbox, ($s) => {
     if (!$s.selectedElementId) return null;
     return $s.animations.get($s.selectedElementId) ?? makeDefaultAnimation($s.selectedElementId);
