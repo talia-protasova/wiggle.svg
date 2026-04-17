@@ -14,10 +14,15 @@ More properties coming next (rotate, fill, stroke)
 
 - Paste or drag-and-drop an SVG file
 - Click any element in the preview to select it
-- Animate opacity and scale with from/to keyframes
+- Animate opacity with from/to keyframes
+- Animate rotation with custom pivot point (transform-origin)
+- Orbit mode — rotate an element around an external center point
+- 3D rotation via rotateX / rotateY with perspective
+- Animate stroke-dashoffset for drawing effects (path length auto-detected)
 - Control duration, delay, easing, repeat, and direction
 - Live preview with instant CSS `@keyframes` output
 - Copy the generated CSS/SVG with one click
+
 
 ## Tech
 
